@@ -7,9 +7,16 @@ from Split import Split
 
 
 def leer_splits(file_path):
-    with open(file_path, "r") as f:
-        reader = csv.reader(f)
-        initial_splits = list(reader)
+    try:
+        with open(file_path, "r") as f:
+            reader = csv.reader(f)
+            initial_splits = list(reader)
+    except:
+        print("Creando el archivo splits.csv rellena los splits.")
+        with open(file_path, "w") as f:
+            pass
+        exit()
+
 
     for split in initial_splits:
         split[1] = float(split[1])
@@ -170,7 +177,6 @@ def crear_splits():
 
 def crear_botones():
     boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white")
-
     boton_restart.pack()
 
     #Botón para abrir el asistente de creacion de splits
@@ -190,17 +196,24 @@ def closing_wizard(wizard):
     if messagebox.askyesno("Salir", "¿Deseas salir del wizard?"):
         wizard.destroy()
 
-def on_closing():
-    if messagebox.askyesno("Guardar tiempos", "¿Deseas guardar los tiempos actuales antes de salir?"):
+
+def on_closing_main():
+    respuesta = messagebox.askyesnocancel("Guardar tiempos", "¿Deseas guardar los tiempos actuales antes de salir?")
+
+    if respuesta is None:  # Cancelar
+        return  # No hace nada, simplemente cierra el mensaje
+    elif respuesta:  # Sí
         escribir_splits("splits.csv")
-    root.destroy()
+        root.destroy()
+    else:  # No
+        root.destroy()
 
 
 def actualizar_fuente(event=None):
     width, height = root.winfo_width(), root.winfo_height()
     font_size = max(8, width // 30)
     fuente_nueva = ("Helvetica", font_size)
-    fuente_timer = ("Helvetica", int(font_size*1.5))
+    fuente_timer = ("Helvetica", int(font_size*3))
 
     timer.config(font=fuente_timer)
 
@@ -209,14 +222,42 @@ def actualizar_fuente(event=None):
         widget.config(font=fuente_nueva)
 
 
+def start_move(event):
+    root.x = event.x
+    root.y = event.y
+
+
+def do_move(event):
+    x = (event.x_root - root.x)
+    y = (event.y_root - root.y)
+    root.geometry(f"+{x}+{y}")
+
+
+def crear_menu_contextual():
+    menu = tk.Menu(root, tearoff=0)
+    menu.add_command(label="Abrir Wizard", command=open_wizard_splits)
+    menu.add_command(label="Cerrar Voyas", command=on_closing_main)
+
+    def mostrar_menu(event):
+        menu.post(event.x_root, event.y_root)
+
+    root.bind("<Button-3>", mostrar_menu)
+
+
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("240x240")
+    root.geometry("500x240")
     root.title("Voyas")
+    root.overrideredirect(True)
+    root.attributes("-topmost", True)  # Mantener la ventana en primer plano
 
     root.configure(bg="black")  # Fondo negro para la ventana principal
-    root.protocol("WM_DELETE_WINDOW", on_closing)
-    root.bind("<Configure>", actualizar_fuente)
+    root.protocol("WM_DELETE_WINDOW", on_closing_main)         # Mensaje de guardar splits al cerrar
+    root.bind("<Configure>", actualizar_fuente)                 # Cambiar tamaño de fuente al cambiar tamaño pestaña
+    root.bind("<Button-1>", start_move)                         # Poder arrastrar al ventana
+    root.bind("<B1-Motion>", do_move)
+
+    crear_menu_contextual()
 
     start_time = float()
     start_split_time = float()
@@ -228,10 +269,10 @@ if __name__ == "__main__":
     initial_splits = leer_splits("splits.csv")
     splits = initial_splits
     min_width = 240 # La suma del minimo de los Labels de frame_splits
-    min_height = int(20*1.5) + len(splits)*20
+    min_height = 42 + len(splits)*20
     root.minsize(min_width, min_height)
 
-    #crear_botones()
+    # crear_botones()
 
     timer = tk.Label(root, text=transform_time(0), font=("Helvetica", 8), bg="black", fg="white")
     timer.pack()
