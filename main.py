@@ -1,4 +1,5 @@
 import csv
+import keyboard
 import tkinter as tk
 from tkinter import messagebox
 import time
@@ -46,6 +47,8 @@ def actualizar_timer():
     if running:
         runtime = time.time() - start_time
 
+        if split_actual >= len(splits):
+            return
         if runtime < splits[split_actual][2]:
             color = "green"
         else:
@@ -166,12 +169,26 @@ def crear_splits():
 
 
 def crear_botones():
-    boton_start = tk.Button(root, text="Start/Split", command=split_start, bg="gray", fg="white", height=1, width=8)
-    boton_start.pack()
+    boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white")
 
-    boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white", height=1, width=8)
     boton_restart.pack()
 
+    #Botón para abrir el asistente de creacion de splits
+    boton_wizard = tk.Button(root, text="Asistente", command=open_wizard_splits, bg="gray", fg="white")
+    boton_wizard.pack()
+
+def open_wizard_splits():
+    wizard = tk.Tk()
+    wizard.geometry("600x600")
+    wizard.title("Wizard")
+
+    wizard.configure(bg="white")
+    wizard.protocol("WM_DELETE_WINDOW", lambda: closing_wizard(wizard))
+
+
+def closing_wizard(wizard):
+    if messagebox.askyesno("Salir", "¿Deseas salir del wizard?"):
+        wizard.destroy()
 
 def on_closing():
     if messagebox.askyesno("Guardar tiempos", "¿Deseas guardar los tiempos actuales antes de salir?"):
@@ -228,5 +245,7 @@ if __name__ == "__main__":
 
     crear_splits()
     clear_deltas()
+
+    keyboard.add_hotkey(" ", split_start)
 
     root.mainloop()
