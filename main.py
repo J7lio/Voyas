@@ -69,10 +69,10 @@ def set_split(index, name, delta, time2):
     else:
         color = "red"
 
-    delta_label = tk.Label(frame_splits, text=transform_time(delta), anchor="w", fg=color, bg=bg_color)
+    delta_label = tk.Label(frame_splits, text=transform_time(delta), anchor="center", fg=color, bg=bg_color)
     delta_label.grid(row=index, column=1, sticky="nsew")
 
-    best_time_label = tk.Label(frame_splits, text=transform_time(time2), anchor="w", bg=bg_color, fg=fg_color)
+    best_time_label = tk.Label(frame_splits, text=transform_time(time2), anchor="e", bg=bg_color, fg=fg_color)
     best_time_label.grid(row=index, column=2, sticky="nsew")
 
 
@@ -83,13 +83,13 @@ def init_split(index, name, time_pb):
     nombre_label = tk.Label(frame_splits, text=name, anchor="w", bg=bg_color, fg=fg_color)
     nombre_label.grid(row=index, column=0, sticky="nsew")
 
-    best_time_label = tk.Label(frame_splits, text=transform_time(time_pb), anchor="w", bg=bg_color, fg=fg_color)
+    best_time_label = tk.Label(frame_splits, text=transform_time(time_pb), anchor="e", bg=bg_color, fg=fg_color)
     best_time_label.grid(row=index, column=2, sticky="nsew")
 
 
 def clear_deltas():
     for i in range(len(splits)):
-        delta = tk.Label(frame_splits, text="", anchor="w", bg="#333333" if i % 2 == 0 else "#000000", fg="white")
+        delta = tk.Label(frame_splits, text="", anchor="center", bg="#333333" if i % 2 == 0 else "#000000", fg="white")
         delta.grid(row=i, column=1, sticky="nsew")
 
 
@@ -166,10 +166,10 @@ def crear_splits():
 
 
 def crear_botones():
-    boton_start = tk.Button(root, text="Start/Split", command=split_start, bg="gray", fg="white")
+    boton_start = tk.Button(root, text="Start/Split", command=split_start, bg="gray", fg="white", height=1, width=8)
     boton_start.pack()
 
-    boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white")
+    boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white", height=1, width=8)
     boton_restart.pack()
 
 
@@ -179,13 +179,27 @@ def on_closing():
     root.destroy()
 
 
+def actualizar_fuente(event=None):
+    width, height = root.winfo_width(), root.winfo_height()
+    font_size = max(8, width // 30)
+    fuente_nueva = ("Helvetica", font_size)
+    fuente_timer = ("Helvetica", int(font_size*1.5))
+
+    timer.config(font=fuente_timer)
+
+    # Cambia las fuentes de los splits también
+    for widget in frame_splits.winfo_children():
+        widget.config(font=fuente_nueva)
+
+
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("300x300")
+    root.geometry("240x240")
     root.title("Voyas")
 
     root.configure(bg="black")  # Fondo negro para la ventana principal
     root.protocol("WM_DELETE_WINDOW", on_closing)
+    root.bind("<Configure>", actualizar_fuente)
 
     start_time = float()
     start_split_time = float()
@@ -196,18 +210,21 @@ if __name__ == "__main__":
 
     initial_splits = leer_splits("splits.csv")
     splits = initial_splits
+    min_width = 240 # La suma del minimo de los Labels de frame_splits
+    min_height = int(20*1.5) + len(splits)*20
+    root.minsize(min_width, min_height)
 
-    crear_botones()
+    #crear_botones()
 
-    timer = tk.Label(root, text=transform_time(0), font=("Helvetica", 24), bg="black", fg="white")
+    timer = tk.Label(root, text=transform_time(0), font=("Helvetica", 8), bg="black", fg="white")
     timer.pack()
 
     frame_splits = tk.Frame(root, bg="black")  # Fondo negro para el frame de splits
-    frame_splits.pack()
+    frame_splits.pack(expand=True, fill="both")
 
-    frame_splits.grid_columnconfigure(0, weight=70, minsize=150)
-    frame_splits.grid_columnconfigure(1, weight=15, minsize=75)
-    frame_splits.grid_columnconfigure(2, weight=15, minsize=75)
+    frame_splits.grid_columnconfigure(0, weight=70, minsize=100)
+    frame_splits.grid_columnconfigure(1, weight=15, minsize=70)
+    frame_splits.grid_columnconfigure(2, weight=15, minsize=70)
 
     crear_splits()
     clear_deltas()
