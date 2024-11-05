@@ -1,9 +1,7 @@
 import csv
 import tkinter as tk
 from tkinter import messagebox
-
 import time
-
 from Split import Split
 
 
@@ -47,12 +45,21 @@ def actualizar_timer():
 
     if running:
         runtime = time.time() - start_time
-        timer.config(text=transform_time(runtime))
+
+        if runtime < splits[split_actual][2]:
+            color = "green"
+        else:
+            color = "red"
+
+        timer.config(text=transform_time(runtime), fg=color)
         root.after(10, actualizar_timer)
 
 
 def set_split(index, name, delta, time2):
-    nombre_label = tk.Label(frame_splits, text=name, anchor="w")
+    bg_color = "#333333" if index % 2 == 0 else "#000000"  # Alterna colores de fondo
+    fg_color = "white"
+
+    nombre_label = tk.Label(frame_splits, text=name, anchor="w", bg=bg_color, fg=fg_color)
     nombre_label.grid(row=index, column=0, sticky="nsew")
 
     if actual_run_times[index][1] < splits[index][1]:
@@ -62,25 +69,27 @@ def set_split(index, name, delta, time2):
     else:
         color = "red"
 
-    delta_label = tk.Label(frame_splits, text=transform_time(delta), anchor="w", fg=color)
+    delta_label = tk.Label(frame_splits, text=transform_time(delta), anchor="w", fg=color, bg=bg_color)
     delta_label.grid(row=index, column=1, sticky="nsew")
 
-    best_time_label = tk.Label(frame_splits, text=transform_time(time2), anchor="w")
+    best_time_label = tk.Label(frame_splits, text=transform_time(time2), anchor="w", bg=bg_color, fg=fg_color)
     best_time_label.grid(row=index, column=2, sticky="nsew")
 
 
 def init_split(index, name, time_pb):
-    nombre_label = tk.Label(frame_splits, text=name, anchor="w")
+    bg_color = "#333333" if index % 2 == 0 else "#000000"  # Alterna colores de fondo
+    fg_color = "white"
+
+    nombre_label = tk.Label(frame_splits, text=name, anchor="w", bg=bg_color, fg=fg_color)
     nombre_label.grid(row=index, column=0, sticky="nsew")
 
-    best_time_label = tk.Label(frame_splits, text=transform_time(time_pb), anchor="w")
+    best_time_label = tk.Label(frame_splits, text=transform_time(time_pb), anchor="w", bg=bg_color, fg=fg_color)
     best_time_label.grid(row=index, column=2, sticky="nsew")
-
 
 
 def clear_deltas():
     for i in range(len(splits)):
-        delta = tk.Label(frame_splits, text="", anchor="w")
+        delta = tk.Label(frame_splits, text="", anchor="w", bg="#333333" if i % 2 == 0 else "#000000", fg="white")
         delta.grid(row=i, column=1, sticky="nsew")
 
 
@@ -109,20 +118,20 @@ def guardar_split_en_run():
 
 def guardar_tiempo_de_cada_splits():
     for i in range(len(splits)):
-        if actual_run_times[i][1] < splits[i][1]:   # Si el tiempo del split es mejor q el historico se guarda
+        if actual_run_times[i][1] < splits[i][1]:  # Si el tiempo del split es mejor q el historico se guarda
             splits[i][1] = actual_run_times[i][1]
 
 
 def check_pb():
     if actual_run_times[-1][2] < splits[-1][2]:
         for i, split_run in enumerate(actual_run_times):
-            splits[i][2] = split_run[2]             # Actualiza el tiempo del split
+            splits[i][2] = split_run[2]  # Actualiza el tiempo del split
 
 
 def split_start():
     global running, start_time, split_actual, start_split_time, actual_run_times
 
-    if not running: # Start
+    if not running:  # Start
         clear_deltas()
 
         crear_splits()
@@ -133,14 +142,14 @@ def split_start():
         start_split_time = start_time
         actual_run_times = []
         actualizar_timer()
-    elif split_actual == len(splits) - 1:   # Split final
+    elif split_actual == len(splits) - 1:  # Split final
         pasar_split()
         running = False
 
         guardar_tiempo_de_cada_splits()
         check_pb()
 
-    else: # Split Normal
+    else:  # Split Normal
         pasar_split()
 
 
@@ -157,15 +166,14 @@ def crear_splits():
 
 
 def crear_botones():
-    boton_start = tk.Button(root, text="Start/Split", command=split_start)
+    boton_start = tk.Button(root, text="Start/Split", command=split_start, bg="gray", fg="white")
     boton_start.pack()
 
-    boton_restart = tk.Button(root, text="Restart", command=restart_timer)
+    boton_restart = tk.Button(root, text="Restart", command=restart_timer, bg="gray", fg="white")
     boton_restart.pack()
 
 
 def on_closing():
-    # Muestra un cuadro de diálogo para confirmar el cierre y preguntar si desea guardar
     if messagebox.askyesno("Guardar tiempos", "¿Deseas guardar los tiempos actuales antes de salir?"):
         escribir_splits("splits.csv")
     root.destroy()
@@ -173,29 +181,28 @@ def on_closing():
 
 if __name__ == "__main__":
     root = tk.Tk()
-    root.geometry("500x500")
+    root.geometry("300x300")
     root.title("Voyas")
 
-    # Configura el evento de cierre para que llame a on_closing
+    root.configure(bg="black")  # Fondo negro para la ventana principal
     root.protocol("WM_DELETE_WINDOW", on_closing)
 
-    start_time = float()            # Variable para inicia del timer
-    start_split_time = float()      # Variable para inicio de cada split
-    running = False                 # Variable de control para el timer
-    split_actual = int()            # Numero de split actual
-    actual_run_times = list()       # Lista de los tiempos de la run actual
-    runtime = float()               # Tiempo de la run
+    start_time = float()
+    start_split_time = float()
+    running = False
+    split_actual = int()
+    actual_run_times = list()
+    runtime = float()
 
     initial_splits = leer_splits("splits.csv")
     splits = initial_splits
 
-
     crear_botones()
 
-    timer = tk.Label(root, text = transform_time(0), font=("Helvetica", 24))
+    timer = tk.Label(root, text=transform_time(0), font=("Helvetica", 24), bg="black", fg="white")
     timer.pack()
 
-    frame_splits = tk.Frame(root)
+    frame_splits = tk.Frame(root, bg="black")  # Fondo negro para el frame de splits
     frame_splits.pack()
 
     frame_splits.grid_columnconfigure(0, weight=70, minsize=150)
@@ -203,5 +210,6 @@ if __name__ == "__main__":
     frame_splits.grid_columnconfigure(2, weight=15, minsize=75)
 
     crear_splits()
+    clear_deltas()
 
     root.mainloop()
